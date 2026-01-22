@@ -3,15 +3,15 @@
 ## Overview
 Advanced Python-based simulation system for intelligent allocation of emergency medical resources. Combines traditional ambulance/hospital allocation with cutting-edge IV drip monitoring and organ safety tracking for comprehensive emergency response management.
 
-## 🎯 Key Features
+##  Key Features
 
-### 🧠 Smart Resource Allocation Engine
+###  Smart Resource Allocation Engine
 - **Priority-based allocation**: Critical → Serious → Moderate → Minor
 - **Multi-factor optimization**: Severity, distance, capacity, ICU availability
 - **Advanced matching**: IV-capable ambulances for IV patients, organ-equipped hospitals for transplant cases
 - **Conflict prevention**: Prevents resource over-allocation
 
-### 💧 IV Drip Monitoring System (Novel Feature)
+###  IV Drip Monitoring System (Novel Feature)
 - **Digital flow tracking**: Real-time IV flow rate monitoring
 - **Automated alerts**:
   - Low remaining time (<30 minutes)
@@ -19,29 +19,29 @@ Advanced Python-based simulation system for intelligent allocation of emergency 
 - **Status simulation**: Tracks active/finished IV drips
 - **Nurse efficiency**: Reduces manual monitoring dependency
 
-### 🫀 Organ Safety Tracking (Unique Feature)
+###  Organ Safety Tracking (Unique Feature)
 - **Temperature monitoring**: Maintains 2-6°C range
 - **Transport time tracking**: Monitors against preservation limits
 - **Viability assessment**: Alerts when organs become unusable
 - **Transplant management**: Ensures organ quality for procedures
 
-### 🚨 Intelligent Alert System
+###  Intelligent Alert System
 - **Real-time notifications**: Dashboard alerts for all critical issues
 - **Categorized alerts**: IV issues, organ risks, resource shortages
 - **Simulation updates**: Time-based status changes
 
-### 📊 Analytics Dashboard
+###  Analytics Dashboard
 - **Resource utilization graphs**: Ambulance/hospital capacity tracking
 - **Patient inflow trends**: Emergency admission patterns
 - **ICU usage reports**: Critical care bed management
 - **Response time metrics**: Allocation efficiency tracking
 
-### 🔐 Secure Access Control
+###  Secure Access Control
 - **Role-based permissions**: Doctor, Nurse, Admin levels
 - **Patient data protection**: Secure handling of medical information
 - **Audit logging**: Track all system interactions
 
-## 🏗️ Architecture
+##  Architecture
 
 ### Components
 - **Frontend**: HTML/CSS/JavaScript web dashboard
@@ -61,7 +61,7 @@ Advanced Python-based simulation system for intelligent allocation of emergency 
 | Diagrams | Draw.io |
 | Version Control | GitHub |
 
-## 🚀 Installation & Usage
+##  Installation & Usage
 
 ### Prerequisites
 - Python 3.8+
@@ -102,7 +102,7 @@ python EMRAS/main.py
 - Real-time alerts
 - Basic analytics
 
-### ❌ Out of Scope
+###  Out of Scope
 - Real hardware integration
 - AI-based diagnostics
 - Insurance processing
@@ -123,20 +123,4 @@ python EMRAS/main.py
 - **Cloud analytics** with advanced reporting
 - **Voice alerts** for hands-free notifications
 
-## 🤝 Contributing
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
 
-## 📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👥 Team
-- **Project Lead**: [Your Name]
-- **Developers**: [Team Members]
-- **Designers**: [UI/UX Team]
-
-## 📞 Support
-For questions or issues, please open an issue on GitHub or contact the development team.
