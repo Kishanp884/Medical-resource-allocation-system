@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}EMRAS — Organ Tracking Dashboard{% endblock %}
+
+{% block body_class %}organ-theme{% endblock %}
+
+{% block content %}
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1><i class="fas fa-heart pulse"></i> Organ Safety Tracking Dashboard</h1>
+          <p class="subtitle">Real-time monitoring of organ viability and preservation</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-heart"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="total-organs">3</span>
+              <span class="stat-label">Total Organs</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon viable"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="viable-organs">3</span>
+              <span class="stat-label">Viable</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon critical"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="critical-organs">0</span>
+              <span class="stat-label">Critical</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-card organ-status">
+          <div class="card-header">
+            <h3><i class="fas fa-heartbeat"></i> Organ Status</h3>
+            <button class="btn-refresh" onclick="loadOrganData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div class="organ-grid" id="organ-grid">
+            <!-- Organ cards will be populated here -->
+          </div>
+        </section>
+
+        <section class="dashboard-card alerts-panel">
+          <div class="card-header">
+            <h3><i class="fas fa-bell"></i> Organ Alerts</h3>
+            <span class="alert-count" id="alert-count">0</span>
+          </div>
+          <div class="alerts-container" id="organ-alerts">
+            <div class="no-alerts">
+              <i class="fas fa-check-circle"></i>
+              <p>All organs are within safe parameters</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card organ-metrics">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Preservation Metrics</h3>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-icon"><i class="fas fa-thermometer-half"></i></div>
+              <div class="metric-info">
+                <span class="metric-value">4.0°C</span>
+                <span class="metric-label">Avg Temperature</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon"><i class="fas fa-clock"></i></div>
+              <div class="metric-info">
+                <span class="metric-value">120 min</span>
+                <span class="metric-label">Avg Transport Time</span>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-icon"><i class="fas fa-shield-alt"></i></div>
+              <div class="metric-info">
+                <span class="metric-value">100%</span>
+                <span class="metric-label">Viability Rate</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card simulation-controls">
+          <div class="card-header">
+            <h3><i class="fas fa-play-circle"></i> Simulation Controls</h3>
+          </div>
+          <div class="control-buttons">
+            <button class="btn-primary" onclick="updateSimulation()">
+              <i class="fas fa-forward"></i> Advance Time (10 min)
+            </button>
+            <button class="btn-secondary" onclick="resetSimulation()">
+              <i class="fas fa-undo"></i> Reset Simulation
+            </button>
+            <button class="btn-info" onclick="showOrganDetails()">
+              <i class="fas fa-info-circle"></i> Detailed View
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const mainContent = document.querySelector('.main-content');
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('show');
+    sidebarOverlay.classList.toggle('show');
+    mainContent.classList.toggle('sidebar-open');
+  }
+
+  sidebarToggle.addEventListener('click', toggleSidebar);
+  sidebarOverlay.addEventListener('click', toggleSidebar);
+
+  // Close sidebar on mobile when clicking a link
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    });
+  });
+
+  // Load initial data
+  loadOrganData();
+  setInterval(loadOrganData, 30000); // Refresh every 30 seconds
+});
+
+async function loadOrganData() {
+  try {
+    const response = await fetch('/api/status');
+    const data = await response.json();
+    renderOrganDashboard(data.organs);
+
+    const alertsResponse = await fetch('/api/alerts');
+    const alertsData = await alertsResponse.json();
+    renderOrganAlerts(alertsData.organ_alerts);
+  } catch (error) {
+    console.error('Error loading organ data:', error);
+  }
+}
+
+function renderOrganDashboard(organs) {
+  const grid = document.getElementById('organ-grid');
+  const viableCount = document.getElementById('viable-organs');
+  const criticalCount = document.getElementById('critical-organs');
+
+  let viable = 0, critical = 0;
+
+  grid.innerHTML = organs.map(organ => {
+    const isViable = organ.viable;
+    const tempStatus = organ.temperature >= 2 && organ.temperature <= 6 ? 'normal' : 'critical';
+    const timeStatus = organ.transport_time <= organ.preservation_duration ? 'normal' : 'critical';
+
+    if (isViable) viable++;
+    else critical++;
+
+    return `
+      <div class="organ-card ${isViable ? 'viable' : 'critical'}">
+        <div class="organ-header">
+          <div class="organ-type">
+            <i class="fas fa-${getOrganIcon(organ.type)}"></i>
+            <span>${organ.type.charAt(0).toUpperCase() + organ.type.slice(1)}</span>
+          </div>
+          <div class="organ-status">
+            <span class="status-indicator ${isViable ? 'viable' : 'critical'}"></span>
+            ${isViable ? 'Viable' : 'Critical'}
+          </div>
+        </div>
+        <div class="organ-metrics">
+          <div class="metric">
+            <i class="fas fa-thermometer-half"></i>
+            <span class="${tempStatus}">${organ.temperature}°C</span>
+          </div>
+          <div class="metric">
+            <i class="fas fa-clock"></i>
+            <span class="${timeStatus}">${organ.transport_time} min</span>
+          </div>
+          <div class="metric">
+            <i class="fas fa-shield-alt"></i>
+            <span>${organ.preservation_duration} min limit</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  viableCount.textContent = viable;
+  criticalCount.textContent = critical;
+}
+
+function renderOrganAlerts(alerts) {
+  const container = document.getElementById('organ-alerts');
+  const count = document.getElementById('alert-count');
+
+  count.textContent = alerts.length;
+
+  if (alerts.length === 0) {
+    container.innerHTML = `
+      <div class="no-alerts">
+        <i class="fas fa-check-circle"></i>
+        <p>All organs are within safe parameters</p>
+      </div>
+    `;
+  } else {
+    container.innerHTML = alerts.map(alert => `
+      <div class="alert-item critical">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${alert}</span>
+      </div>
+    `).join('');
+  }
+}
+
+async function updateSimulation() {
+  try {
+    await fetch('/api/update_simulation', { method: 'POST' });
+    showToast('Simulation advanced by 10 minutes');
+    loadOrganData();
+  } catch (error) {
+    showToast('Error updating simulation');
+  }
+}
+
+function resetSimulation() {
+  // Reset functionality would need backend support
+  showToast('Reset functionality coming soon');
+}
+
+function showOrganDetails() {
+  showToast('Detailed organ view coming soon');
+}
+
+function getOrganIcon(type) {
+  const icons = {
+    'heart': 'heart',
+    'kidney': 'kidneys',
+    'liver': 'liver',
+    'lung': 'lungs'
+  };
+  return icons[type] || 'heart';
+}
+</script>
+{% endblock %}

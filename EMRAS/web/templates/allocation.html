@@ -1,0 +1,914 @@
+{% extends "base.html" %}
+
+{% block title %}EMRAS — Resource Allocation Dashboard{% endblock %}
+
+{% block body_class %}allocation-theme{% endblock %}
+
+{% block content %}
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1><i class="fas fa-cogs spin"></i> Smart Resource Allocation Dashboard</h1>
+          <p class="subtitle">Intelligent allocation of emergency medical resources</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-ambulance"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="available-ambulances">2</span>
+              <span class="stat-label">Available Ambulances</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-hospital"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="available-beds">3</span>
+              <span class="stat-label">Available Beds</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="pending-patients">3</span>
+              <span class="stat-label">Pending Patients</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-card allocation-engine">
+          <div class="card-header">
+            <h3><i class="fas fa-brain"></i> Smart Allocation Engine</h3>
+            <button class="btn-primary" onclick="runAllocation()">
+              <i class="fas fa-play"></i> Run Allocation
+            </button>
+          </div>
+          <div class="allocation-visualization">
+            <div class="allocation-flow">
+              <div class="flow-step active">
+                <div class="step-icon"><i class="fas fa-users"></i></div>
+                <div class="step-info">
+                  <h4>Patient Priority</h4>
+                  <p>Sort by severity</p>
+                </div>
+              </div>
+              <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+              <div class="flow-step">
+                <div class="step-icon"><i class="fas fa-ambulance"></i></div>
+                <div class="step-info">
+                  <h4>Ambulance Match</h4>
+                  <p>Nearest with IV supplies</p>
+                </div>
+              </div>
+              <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+              <div class="flow-step">
+                <div class="step-icon"><i class="fas fa-hospital"></i></div>
+                <div class="step-info">
+                  <h4>Hospital Assignment</h4>
+                  <p>Capacity & organ match</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-results">
+          <div class="card-header">
+            <h3><i class="fas fa-clipboard-check"></i> Allocation Results</h3>
+            <div class="result-actions">
+              <button class="btn-secondary" onclick="exportResults()">
+                <i class="fas fa-download"></i> Export
+              </button>
+              <button class="btn-info" onclick="clearResults()">
+                <i class="fas fa-trash"></i> Clear
+              </button>
+            </div>
+          </div>
+          <div class="results-container" id="allocation-results">
+            <div class="no-results">
+              <i class="fas fa-info-circle"></i>
+              <p>Run allocation to see results</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card resource-overview">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Resource Overview</h3>
+          </div>
+          <div class="resource-grid">
+            <div class="resource-item">
+              <div class="resource-icon ambulance">
+                <i class="fas fa-ambulance"></i>
+              </div>
+              <div class="resource-info">
+                <h4>Ambulances</h4>
+                <div class="resource-stats">
+                  <span class="available" id="amb-available">2</span>
+                  <span class="total">/ 3</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="amb-bar" style="width: 67%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon hospital">
+                <i class="fas fa-hospital"></i>
+              </div>
+              <div class="resource-info">
+                <h4>Hospital Beds</h4>
+                <div class="resource-stats">
+                  <span class="available" id="bed-available">3</span>
+                  <span class="total">/ 5</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="bed-bar" style="width: 60%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon icu">
+                <i class="fas fa-procedures"></i>
+              </div>
+              <div class="resource-info">
+                <h4>ICU Beds</h4>
+                <div class="resource-stats">
+                  <span class="available" id="icu-available">2</span>
+                  <span class="total">/ 2</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="icu-bar" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-analytics">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Allocation Analytics</h3>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-route"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="avg-distance">2.3 km</span>
+                <span class="analytic-label">Avg Response Distance</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-clock"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="allocation-time">1.2s</span>
+                <span class="analytic-label">Allocation Time</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-percentage"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="success-rate">100%</span>
+                <span class="analytic-label">Success Rate</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-users"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="patients-allocated">3</span>
+                <span class="analytic-label">Patients Allocated</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-controls">
+          <div class="card-header">
+            <h3><i class="fas fa-sliders-h"></i> Allocation Controls</h3>
+          </div>
+          <div class="control-options">
+            <div class="control-group">
+              <label class="control-label">
+                <input type="checkbox" id="prioritize-severity" checked>
+                <span>Prioritize by Severity</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="consider-distance" checked>
+                <span>Consider Distance</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="match-iv-supplies" checked>
+                <span>Match IV Supplies</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="match-organs" checked>
+                <span>Match Organ Needs</span>
+              </label>
+            </div>
+            <div class="control-buttons">
+              <button class="btn-primary" onclick="runSmartAllocation()">
+                <i class="fas fa-magic"></i> Smart Allocation
+              </button>
+              <button class="btn-secondary" onclick="runBasicAllocation()">
+                <i class="fas fa-play"></i> Basic Allocation
+              </button>
+              <button class="btn-info" onclick="showAllocationHistory()">
+                <i class="fas fa-history"></i> History
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card patient-queue">
+          <div class="card-header">
+            <h3><i class="fas fa-list"></i> Patient Queue</h3>
+            <button class="btn-refresh" onclick="loadPatientData()"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="patient-list" id="patient-queue">
+            <!-- Patient queue will be populated here -->
+          </div>
+        </section>
+      </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allocationResults = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Sidebar functionality
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const mainContent = document.querySelector('.main-content');
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('show');
+    sidebarOverlay.classList.toggle('show');
+    mainContent.classList.toggle('sidebar-open');
+  }
+
+  sidebarToggle.addEventListener('click', toggleSidebar);
+  sidebarOverlay.addEventListener('click', toggleSidebar);
+
+  // Close sidebar on mobile when clicking a link
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    });
+  });
+
+  loadPatientData();
+  loadResourceData();
+});
+
+async function loadPatientData() {
+  try {
+    const response = await fetch('/api/status');
+    const data = await response.json();
+    renderPatientQueue(data.patients);
+    updateResourceStats(data);
+  } catch (error) {
+    console.error('Error loading patient data:', error);
+  }
+}
+
+async function loadResourceData() {
+  try {
+    const response = await fetch('/api/status');
+    const data = await response.json();
+    updateResourceStats(data);
+  } catch (error) {
+    console.error('Error loading resource data:', error);
+  }
+}
+
+function renderPatientQueue(patients) {
+  const queue = document.getElementById('patient-queue');
+
+  queue.innerHTML = patients.map(patient => {
+    const severityClass = patient.severity.toLowerCase();
+    const hasIV = patient.iv_required;
+    const needsOrgan = patient.needs_organ;
+
+    return `
+      <div class="patient-item ${severityClass}">
+        <div class="patient-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="patient-info">
+          <div class="patient-name">Patient ${patient.id}</div>
+          <div class="patient-details">
+            <span class="severity ${severityClass}">${patient.severity}</span>
+            ${hasIV ? '<span class="badge iv"><i class="fas fa-tint"></i> IV</span>' : ''}
+            ${needsOrgan ? `<span class="badge organ"><i class="fas fa-heart"></i> ${needsOrgan}</span>` : ''}
+          </div>
+        </div>
+        <div class="patient-location">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>(${patient.location[0]}, ${patient.location[1]})</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateResourceStats(data) {
+  const availableAmb = data.ambulances.filter(a => a.available).length;
+  const totalAmb = data.ambulances.length;
+  const availableBeds = data.hospitals.reduce((sum, h) => sum + h.capacity, 0);
+  const totalBeds = 5; // Assuming total capacity
+  const icuBeds = data.hospitals.filter(h => h.icu).length;
+
+  document.getElementById('available-ambulances').textContent = availableAmb;
+  document.getElementById('available-beds').textContent = availableBeds;
+  document.getElementById('pending-patients').textContent = data.patients.length;
+
+  document.getElementById('amb-available').textContent = availableAmb;
+  document.getElementById('bed-available').textContent = availableBeds;
+  document.getElementById('icu-available').textContent = icuBeds;
+
+  document.getElementById('amb-bar').style.width = `${(availableAmb / totalAmb) * 100}%`;
+  document.getElementById('bed-bar').style.width = `${(availableBeds / totalBeds) * 100}%`;
+  document.getElementById('icu-bar').style.width = `${(icuBeds / 2) * 100}%`; // Assuming 2 ICU beds total
+}
+
+async function runAllocation() {
+  const results = document.getElementById('allocation-results');
+
+  results.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Running smart allocation algorithm...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/allocate', { method: 'POST' });
+    const data = await response.json();
+
+    allocationResults = data.results;
+    renderAllocationResults(data.results);
+    loadResourceData(); // Update resource stats
+
+    showToast('Allocation completed successfully!');
+  } catch (error) {
+    results.innerHTML = `
+      <div class="error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Error running allocation: ${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+function renderAllocationResults(results) {
+  const container = document.getElementById('allocation-results');
+
+  if (!results || results.length === 0) {
+    container.innerHTML = `
+      <div class="no-results">
+        <i class="fas fa-info-circle"></i>
+        <p>No allocation results available</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="results-summary">
+      <div class="summary-stat">
+        <span class="summary-number">${results.filter(r => r.ambulance).length}</span>
+        <span class="summary-label">Ambulances Assigned</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-number">${results.filter(r => r.hospital).length}</span>
+        <span class="summary-label">Hospitals Assigned</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-number">${results.filter(r => !r.ambulance || !r.hospital).length}</span>
+        <span class="summary-label">Pending Resources</span>
+      </div>
+    </div>
+    <div class="results-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Severity</th>
+            <th>Ambulance</th>
+            <th>Hospital</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results.map(result => `
+            <tr class="${result.ambulance && result.hospital ? 'success' : 'warning'}">
+              <td>${result.patient}</td>
+              <td><span class="severity-badge ${result.patient.startsWith('P1') ? 'critical' : result.patient.startsWith('P2') ? 'moderate' : 'serious'}">${result.patient.startsWith('P1') ? 'Critical' : result.patient.startsWith('P2') ? 'Moderate' : 'Serious'}</span></td>
+              <td>${result.ambulance || '<span class="no-resource">None</span>'}</td>
+              <td>${result.hospital || '<span class="no-resource">None</span>'}</td>
+              <td>
+                ${result.ambulance && result.hospital ?
+                  '<span class="status success"><i class="fas fa-check"></i> Allocated</span>' :
+                  '<span class="status warning"><i class="fas fa-clock"></i> Pending</span>'}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function runSmartAllocation() {
+  runAllocation();
+}
+
+function runBasicAllocation() {
+  runAllocation();
+}
+
+function exportResults() {
+  if (!allocationResults) {
+    showToast('No results to export');
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(allocationResults, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'allocation-results.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showToast('Results exported successfully');
+}
+
+function clearResults() {
+  allocationResults = null;
+  document.getElementById('allocation-results').innerHTML = `
+    <div class="no-results">
+      <i class="fas fa-info-circle"></i>
+      <p>Run allocation to see results</p>
+    </div>
+  `;
+  showToast('Results cleared');
+}
+
+function showAllocationHistory() {
+  showToast('Allocation history coming soon');
+}
+</script>
+{% endblock %}
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1><i class="fas fa-cogs spin"></i> Smart Resource Allocation Dashboard</h1>
+          <p class="subtitle">Intelligent allocation of emergency medical resources</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-ambulance"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="available-ambulances">2</span>
+              <span class="stat-label">Available Ambulances</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-hospital"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="available-beds">3</span>
+              <span class="stat-label">Available Beds</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="pending-patients">3</span>
+              <span class="stat-label">Pending Patients</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-card allocation-engine">
+          <div class="card-header">
+            <h3><i class="fas fa-brain"></i> Smart Allocation Engine</h3>
+            <button class="btn-primary" onclick="runAllocation()">
+              <i class="fas fa-play"></i> Run Allocation
+            </button>
+          </div>
+          <div class="allocation-visualization">
+            <div class="allocation-flow">
+              <div class="flow-step active">
+                <div class="step-icon"><i class="fas fa-users"></i></div>
+                <div class="step-info">
+                  <h4>Patient Priority</h4>
+                  <p>Sort by severity</p>
+                </div>
+              </div>
+              <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+              <div class="flow-step">
+                <div class="step-icon"><i class="fas fa-ambulance"></i></div>
+                <div class="step-info">
+                  <h4>Ambulance Match</h4>
+                  <p>Nearest with IV supplies</p>
+                </div>
+              </div>
+              <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+              <div class="flow-step">
+                <div class="step-icon"><i class="fas fa-hospital"></i></div>
+                <div class="step-info">
+                  <h4>Hospital Assignment</h4>
+                  <p>Capacity & organ match</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-results">
+          <div class="card-header">
+            <h3><i class="fas fa-clipboard-check"></i> Allocation Results</h3>
+            <div class="result-actions">
+              <button class="btn-secondary" onclick="exportResults()">
+                <i class="fas fa-download"></i> Export
+              </button>
+              <button class="btn-info" onclick="clearResults()">
+                <i class="fas fa-trash"></i> Clear
+              </button>
+            </div>
+          </div>
+          <div class="results-container" id="allocation-results">
+            <div class="no-results">
+              <i class="fas fa-info-circle"></i>
+              <p>Run allocation to see results</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card resource-overview">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Resource Overview</h3>
+          </div>
+          <div class="resource-grid">
+            <div class="resource-item">
+              <div class="resource-icon ambulance">
+                <i class="fas fa-ambulance"></i>
+              </div>
+              <div class="resource-info">
+                <h4>Ambulances</h4>
+                <div class="resource-stats">
+                  <span class="available" id="amb-available">2</span>
+                  <span class="total">/ 3</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="amb-bar" style="width: 67%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon hospital">
+                <i class="fas fa-hospital"></i>
+              </div>
+              <div class="resource-info">
+                <h4>Hospital Beds</h4>
+                <div class="resource-stats">
+                  <span class="available" id="bed-available">3</span>
+                  <span class="total">/ 5</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="bed-bar" style="width: 60%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="resource-item">
+              <div class="resource-icon icu">
+                <i class="fas fa-procedures"></i>
+              </div>
+              <div class="resource-info">
+                <h4>ICU Beds</h4>
+                <div class="resource-stats">
+                  <span class="available" id="icu-available">2</span>
+                  <span class="total">/ 2</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="bar-fill" id="icu-bar" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-analytics">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Allocation Analytics</h3>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-route"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="avg-distance">2.3 km</span>
+                <span class="analytic-label">Avg Response Distance</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-clock"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="allocation-time">1.2s</span>
+                <span class="analytic-label">Allocation Time</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-percentage"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="success-rate">100%</span>
+                <span class="analytic-label">Success Rate</span>
+              </div>
+            </div>
+            <div class="analytic-item">
+              <div class="analytic-icon"><i class="fas fa-users"></i></div>
+              <div class="analytic-info">
+                <span class="analytic-value" id="patients-allocated">3</span>
+                <span class="analytic-label">Patients Allocated</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card allocation-controls">
+          <div class="card-header">
+            <h3><i class="fas fa-sliders-h"></i> Allocation Controls</h3>
+          </div>
+          <div class="control-options">
+            <div class="control-group">
+              <label class="control-label">
+                <input type="checkbox" id="prioritize-severity" checked>
+                <span>Prioritize by Severity</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="consider-distance" checked>
+                <span>Consider Distance</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="match-iv-supplies" checked>
+                <span>Match IV Supplies</span>
+              </label>
+              <label class="control-label">
+                <input type="checkbox" id="match-organs" checked>
+                <span>Match Organ Needs</span>
+              </label>
+            </div>
+            <div class="control-buttons">
+              <button class="btn-primary" onclick="runSmartAllocation()">
+                <i class="fas fa-magic"></i> Smart Allocation
+              </button>
+              <button class="btn-secondary" onclick="runBasicAllocation()">
+                <i class="fas fa-play"></i> Basic Allocation
+              </button>
+              <button class="btn-info" onclick="showAllocationHistory()">
+                <i class="fas fa-history"></i> History
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card patient-queue">
+          <div class="card-header">
+            <h3><i class="fas fa-list"></i> Patient Queue</h3>
+            <button class="btn-refresh" onclick="loadPatientData()"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="patient-list" id="patient-queue">
+            <!-- Patient queue will be populated here -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+    <script>
+      let allocationResults = null;
+
+      document.addEventListener('DOMContentLoaded', function() {
+        loadPatientData();
+        loadResourceData();
+      });
+
+      async function loadPatientData() {
+        try {
+          const response = await fetch('/api/status');
+          const data = await response.json();
+          renderPatientQueue(data.patients);
+          updateResourceStats(data);
+        } catch (error) {
+          console.error('Error loading patient data:', error);
+        }
+      }
+
+      async function loadResourceData() {
+        try {
+          const response = await fetch('/api/status');
+          const data = await response.json();
+          updateResourceStats(data);
+        } catch (error) {
+          console.error('Error loading resource data:', error);
+        }
+      }
+
+      function renderPatientQueue(patients) {
+        const queue = document.getElementById('patient-queue');
+
+        queue.innerHTML = patients.map(patient => {
+          const severityClass = patient.severity.toLowerCase();
+          const hasIV = patient.iv_required;
+          const needsOrgan = patient.needs_organ;
+
+          return `
+            <div class="patient-item ${severityClass}">
+              <div class="patient-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="patient-info">
+                <div class="patient-name">Patient ${patient.id}</div>
+                <div class="patient-details">
+                  <span class="severity ${severityClass}">${patient.severity}</span>
+                  ${hasIV ? '<span class="badge iv"><i class="fas fa-tint"></i> IV</span>' : ''}
+                  ${needsOrgan ? `<span class="badge organ"><i class="fas fa-heart"></i> ${needsOrgan}</span>` : ''}
+                </div>
+              </div>
+              <div class="patient-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>(${patient.location[0]}, ${patient.location[1]})</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function updateResourceStats(data) {
+        const availableAmb = data.ambulances.filter(a => a.available).length;
+        const totalAmb = data.ambulances.length;
+        const availableBeds = data.hospitals.reduce((sum, h) => sum + h.capacity, 0);
+        const totalBeds = 5; // Assuming total capacity
+        const icuBeds = data.hospitals.filter(h => h.icu).length;
+
+        document.getElementById('available-ambulances').textContent = availableAmb;
+        document.getElementById('available-beds').textContent = availableBeds;
+        document.getElementById('pending-patients').textContent = data.patients.length;
+
+        document.getElementById('amb-available').textContent = availableAmb;
+        document.getElementById('bed-available').textContent = availableBeds;
+        document.getElementById('icu-available').textContent = icuBeds;
+
+        document.getElementById('amb-bar').style.width = `${(availableAmb / totalAmb) * 100}%`;
+        document.getElementById('bed-bar').style.width = `${(availableBeds / totalBeds) * 100}%`;
+        document.getElementById('icu-bar').style.width = `${(icuBeds / 2) * 100}%`; // Assuming 2 ICU beds total
+      }
+
+      async function runAllocation() {
+        const results = document.getElementById('allocation-results');
+
+        results.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Running smart allocation algorithm...</p>
+          </div>
+        `;
+
+        try {
+          const response = await fetch('/api/allocate', { method: 'POST' });
+          const data = await response.json();
+
+          allocationResults = data.results;
+          renderAllocationResults(data.results);
+          loadResourceData(); // Update resource stats
+
+          showToast('Allocation completed successfully!');
+        } catch (error) {
+          results.innerHTML = `
+            <div class="error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error running allocation: ${error.message}</p>
+            </div>
+          `;
+        }
+      }
+
+      function renderAllocationResults(results) {
+        const container = document.getElementById('allocation-results');
+
+        if (!results || results.length === 0) {
+          container.innerHTML = `
+            <div class="no-results">
+              <i class="fas fa-info-circle"></i>
+              <p>No allocation results available</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="results-summary">
+            <div class="summary-stat">
+              <span class="summary-number">${results.filter(r => r.ambulance).length}</span>
+              <span class="summary-label">Ambulances Assigned</span>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-number">${results.filter(r => r.hospital).length}</span>
+              <span class="summary-label">Hospitals Assigned</span>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-number">${results.filter(r => !r.ambulance || !r.hospital).length}</span>
+              <span class="summary-label">Pending Resources</span>
+            </div>
+          </div>
+          <div class="results-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Severity</th>
+                  <th>Ambulance</th>
+                  <th>Hospital</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${results.map(result => `
+                  <tr class="${result.ambulance && result.hospital ? 'success' : 'warning'}">
+                    <td>${result.patient}</td>
+                    <td><span class="severity-badge ${result.patient.startsWith('P1') ? 'critical' : result.patient.startsWith('P2') ? 'moderate' : 'serious'}">${result.patient.startsWith('P1') ? 'Critical' : result.patient.startsWith('P2') ? 'Moderate' : 'Serious'}</span></td>
+                    <td>${result.ambulance || '<span class="no-resource">None</span>'}</td>
+                    <td>${result.hospital || '<span class="no-resource">None</span>'}</td>
+                    <td>
+                      ${result.ambulance && result.hospital ?
+                        '<span class="status success"><i class="fas fa-check"></i> Allocated</span>' :
+                        '<span class="status warning"><i class="fas fa-clock"></i> Pending</span>'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function runSmartAllocation() {
+        runAllocation();
+      }
+
+      function runBasicAllocation() {
+        runAllocation();
+      }
+
+      function exportResults() {
+        if (!allocationResults) {
+          showToast('No results to export');
+          return;
+        }
+
+        const blob = new Blob([JSON.stringify(allocationResults, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'allocation-results.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast('Results exported successfully');
+      }
+
+      function clearResults() {
+        allocationResults = null;
+        document.getElementById('allocation-results').innerHTML = `
+          <div class="no-results">
+            <i class="fas fa-info-circle"></i>
+            <p>Run allocation to see results</p>
+          </div>
+        `;
+        showToast('Results cleared');
+      }
+
+      function showAllocationHistory() {
+        showToast('Allocation history coming soon');
+      }
+    </script>
+  </body>
+</html>

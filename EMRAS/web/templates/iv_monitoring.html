@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}EMRAS — IV Monitoring Dashboard{% endblock %}
+
+{% block body_class %}iv-theme{% endblock %}
+
+{% block content %}
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1><i class="fas fa-tint drip-animation"></i> IV Drip Monitoring Dashboard</h1>
+          <p class="subtitle">Real-time monitoring of intravenous fluid administration</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-tint"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="active-iv">2</span>
+              <span class="stat-label">Active IVs</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="critical-iv">0</span>
+              <span class="stat-label">Critical</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-info">
+              <span class="stat-number" id="normal-iv">2</span>
+              <span class="stat-label">Normal</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="dashboard-card iv-status">
+          <div class="card-header">
+            <h3><i class="fas fa-syringe"></i> IV Status Monitor</h3>
+            <button class="btn-refresh" onclick="loadIVData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div class="iv-grid" id="iv-grid">
+            <!-- IV monitoring cards will be populated here -->
+          </div>
+        </section>
+
+        <section class="dashboard-card alerts-panel">
+          <div class="card-header">
+            <h3><i class="fas fa-bell"></i> IV Alerts</h3>
+            <span class="alert-count" id="iv-alert-count">0</span>
+          </div>
+          <div class="alerts-container" id="iv-alerts">
+            <div class="no-alerts">
+              <i class="fas fa-check-circle"></i>
+              <p>All IV drips are within normal parameters</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card iv-metrics">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-bar"></i> Flow Rate Analytics</h3>
+          </div>
+          <div class="flow-rate-chart">
+            <div class="chart-container">
+              <canvas id="flowRateChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-color normal"></span>
+                <span>Normal (20-100 ml/hr)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color low"></span>
+                <span>Low Flow</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color high"></span>
+                <span>High Flow</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-card iv-controls">
+          <div class="card-header">
+            <h3><i class="fas fa-sliders-h"></i> Monitoring Controls</h3>
+          </div>
+          <div class="control-buttons">
+            <button class="btn-primary" onclick="updateSimulation()">
+              <i class="fas fa-forward"></i> Advance Time (10 min)
+            </button>
+            <button class="btn-secondary" onclick="adjustFlowRate()">
+              <i class="fas fa-tachometer-alt"></i> Adjust Flow Rate
+            </button>
+            <button class="btn-info" onclick="showIVHistory()">
+              <i class="fas fa-history"></i> Flow History
+            </button>
+            <button class="btn-warning" onclick="emergencyStop()">
+              <i class="fas fa-stop-circle"></i> Emergency Stop
+            </button>
+          </div>
+          <div class="control-settings">
+            <div class="setting-item">
+              <label>Alert Threshold (minutes):</label>
+              <input type="number" id="alert-threshold" value="30" min="5" max="120">
+            </div>
+            <div class="setting-item">
+              <label>Auto-refresh (seconds):</label>
+              <input type="number" id="refresh-interval" value="30" min="10" max="300">
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let refreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Sidebar functionality
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const mainContent = document.querySelector('.main-content');
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('show');
+    sidebarOverlay.classList.toggle('show');
+    mainContent.classList.toggle('sidebar-open');
+  }
+
+  sidebarToggle.addEventListener('click', toggleSidebar);
+  sidebarOverlay.addEventListener('click', toggleSidebar);
+
+  // Close sidebar on mobile when clicking a link
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    });
+  });
+
+  loadIVData();
+  startAutoRefresh();
+});
+
+function startAutoRefresh() {
+  const interval = document.getElementById('refresh-interval').value * 1000;
+  refreshInterval = setInterval(loadIVData, interval);
+}
+
+document.getElementById('refresh-interval').addEventListener('change', function() {
+  clearInterval(refreshInterval);
+  startAutoRefresh();
+});
+
+async function loadIVData() {
+  try {
+    const response = await fetch('/api/status');
+    const data = await response.json();
+    renderIVDashboard(data.patients);
+
+    const alertsResponse = await fetch('/api/alerts');
+    const alertsData = await alertsResponse.json();
+    renderIVAlerts(alertsData.iv_alerts);
+  } catch (error) {
+    console.error('Error loading IV data:', error);
+  }
+}
+
+function renderIVDashboard(patients) {
+  const grid = document.getElementById('iv-grid');
+  const activeCount = document.getElementById('active-iv');
+  const criticalCount = document.getElementById('critical-iv');
+  const normalCount = document.getElementById('normal-iv');
+
+  let active = 0, critical = 0, normal = 0;
+
+  const ivPatients = patients.filter(p => p.iv_required);
+
+  grid.innerHTML = ivPatients.map(patient => {
+    const status = patient.iv_status;
+    const remaining = patient.iv_remaining_time || 0;
+    const flowRate = patient.iv_flow_rate || 0;
+    const isActive = status === 'active';
+    const isCritical = remaining < 30 || flowRate < 20 || flowRate > 100;
+
+    if (isActive) active++;
+    if (isCritical) critical++;
+    else if (isActive) normal++;
+
+    const progressPercent = isActive ? Math.max(0, (remaining / 120) * 100) : 0;
+
+    return `
+      <div class="iv-card ${isActive ? (isCritical ? 'critical' : 'normal') : 'finished'}">
+        <div class="iv-header">
+          <div class="patient-info">
+            <i class="fas fa-user"></i>
+            <span>Patient ${patient.id}</span>
+          </div>
+          <div class="iv-status">
+            <span class="status-indicator ${isActive ? (isCritical ? 'critical' : 'normal') : 'finished'}"></span>
+            ${status.charAt(0).toUpperCase() + status.slice(1)}
+          </div>
+        </div>
+        <div class="iv-progress">
+          <div class="progress-bar">
+            <div class="progress-fill ${isCritical ? 'critical' : 'normal'}" style="width: ${progressPercent}%"></div>
+          </div>
+          <div class="progress-text">
+            <span>${remaining} min remaining</span>
+          </div>
+        </div>
+        <div class="iv-metrics">
+          <div class="metric">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="${flowRate < 20 || flowRate > 100 ? 'critical' : 'normal'}">${flowRate} ml/hr</span>
+          </div>
+          <div class="metric">
+            <i class="fas fa-clock"></i>
+            <span>${remaining} min left</span>
+          </div>
+        </div>
+        <div class="iv-controls">
+          <button class="btn-small" onclick="adjustPatientIV('${patient.id}')">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  activeCount.textContent = active;
+  criticalCount.textContent = critical;
+  normalCount.textContent = normal;
+
+  updateFlowRateChart(ivPatients);
+}
+
+function renderIVAlerts(alerts) {
+  const container = document.getElementById('iv-alerts');
+  const count = document.getElementById('iv-alert-count');
+
+  count.textContent = alerts.length;
+
+  if (alerts.length === 0) {
+    container.innerHTML = `
+      <div class="no-alerts">
+        <i class="fas fa-check-circle"></i>
+        <p>All IV drips are within normal parameters</p>
+      </div>
+    `;
+  } else {
+    container.innerHTML = alerts.map(alert => `
+      <div class="alert-item ${alert.includes('about to finish') ? 'critical' : 'warning'}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${alert}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function updateFlowRateChart(patients) {
+  // Simple bar chart implementation
+  const canvas = document.getElementById('flowRateChart');
+  const ctx = canvas.getContext('2d');
+
+  // Clear canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const ivPatients = patients.filter(p => p.iv_status === 'active');
+  const barWidth = canvas.width / ivPatients.length;
+  const maxHeight = canvas.height - 40;
+
+  ivPatients.forEach((patient, index) => {
+    const flowRate = patient.iv_flow_rate || 0;
+    const barHeight = (flowRate / 100) * maxHeight; // Assuming 100 ml/hr is max
+    const x = index * barWidth + 10;
+    const y = canvas.height - barHeight - 20;
+
+    // Bar color based on flow rate
+    let color = '#10B981'; // Normal
+    if (flowRate < 20 || flowRate > 100) color = '#EF4444'; // Critical
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, barWidth - 20, barHeight);
+
+    // Label
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(`P${patient.id}`, x + (barWidth - 20) / 2, canvas.height - 5);
+  });
+}
+
+async function updateSimulation() {
+  try {
+    await fetch('/api/update_simulation', { method: 'POST' });
+    showToast('IV simulation advanced by 10 minutes');
+    loadIVData();
+  } catch (error) {
+    showToast('Error updating simulation');
+  }
+}
+
+function adjustFlowRate() {
+  showToast('Flow rate adjustment coming soon');
+}
+
+function showIVHistory() {
+  showToast('IV history view coming soon');
+}
+
+function emergencyStop() {
+  showToast('Emergency stop activated');
+}
+
+function adjustPatientIV(patientId) {
+  showToast(`Adjusting IV for patient ${patientId}`);
+}
+</script>
+{% endblock %}

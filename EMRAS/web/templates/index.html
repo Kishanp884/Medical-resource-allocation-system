@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}EMRAS — Main Dashboard{% endblock %}
+
+{% block body_class %}home-theme{% endblock %}
+
+{% block content %}
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <header>
+      <h1>Emergency Medical Resource Allocation System (EMRAS)</h1>
+    </header>
+
+    <main>
+      <p>Click the button to run the allocation simulation and view results. Use the toolbar to download, copy or filter results.</p>
+
+      <div class="controls row">
+        <div class="row" style="flex:1;gap:8px">
+          <button id="run">Run Allocation</button>
+          <button id="status">Show Data Status</button>
+          <button id="alerts">Show Alerts</button>
+          <button id="updateSim">Update Simulation</button>
+          <button id="download">Download Results</button>
+          <button id="copy">Copy Results</button>
+          <button id="clear">Clear Output</button>
+        </div>
+
+        <div class="row" style="align-items:center">
+          <input id="filter" placeholder="Search patients, ambulances, hospitals" />
+          <label class="switch"><input type="checkbox" id="onlyUnassigned"/><span>Only unassigned</span></label>
+        </div>
+      </div>
+
+      <section id="output"></section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const mainContent = document.querySelector('.main-content');
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('show');
+    sidebarOverlay.classList.toggle('show');
+    mainContent.classList.toggle('sidebar-open');
+  }
+
+  sidebarToggle.addEventListener('click', toggleSidebar);
+  sidebarOverlay.addEventListener('click', toggleSidebar);
+
+  // Close sidebar on mobile when clicking a link
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    });
+  });
+
+  // Update sidebar stats
+  updateSidebarStats();
+});
+
+async function updateSidebarStats() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+
+    document.getElementById('sidebar-patients').textContent = data.patients.length;
+    document.getElementById('sidebar-ambulances').textContent = data.ambulances.length;
+    document.getElementById('sidebar-hospitals').textContent = data.hospitals.length;
+  } catch (err) {
+    console.error('Failed to update sidebar stats:', err);
+  }
+}
+</script>
+{% endblock %}

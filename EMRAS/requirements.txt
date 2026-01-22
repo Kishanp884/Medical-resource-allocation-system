@@ -1,0 +1,3 @@
+# External dependency for web UI
+Flask>=2.0
+
