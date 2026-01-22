@@ -97,4 +97,4 @@ AI priority prediction using machine learning
 Mobile app integration for field access
 IoT sensor connectivity for real-time monitoring
 Cloud analytics with advanced reporting
-Voice alerts for hands-free notifications
+Voice alerts for hands-free notifications.
