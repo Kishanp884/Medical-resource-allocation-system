@@ -1,100 +1,75 @@
-Emergency Medical Resource Allocation System (EMRAS)
-Overview
-Advanced Python-based simulation system for intelligent allocation of emergency medical resources. Combines traditional ambulance/hospital allocation with cutting-edge IV drip monitoring and organ safety tracking for comprehensive emergency response management.
+The Medical Resource Allocation System is a web-based application designed to efficiently manage hospital resources such as beds, staff, IV drips, and organ transportation. The system improves patient care by automating resource allocation, monitoring critical parameters, and generating alerts for medical staff.
 
-Key Features
-Smart Resource Allocation Engine
-Priority-based allocation: Critical → Serious → Moderate → Minor
-Multi-factor optimization: Severity, distance, capacity, ICU availability
-Advanced matching: IV-capable ambulances for IV patients, organ-equipped hospitals for transplant cases
-Conflict prevention: Prevents resource over-allocation
-IV Drip Monitoring System (Novel Feature)
-Digital flow tracking: Real-time IV flow rate monitoring
-Automated alerts:
-Low remaining time (<30 minutes)
-Abnormal flow rates (<20 or >100 ml/hr)
-Status simulation: Tracks active/finished IV drips
-Nurse efficiency: Reduces manual monitoring dependency
-Organ Safety Tracking (Unique Feature)
-Temperature monitoring: Maintains 2-6°C range
-Transport time tracking: Monitors against preservation limits
-Viability assessment: Alerts when organs become unusable
-Transplant management: Ensures organ quality for procedures
-Intelligent Alert System
-Real-time notifications: Dashboard alerts for all critical issues
-Categorized alerts: IV issues, organ risks, resource shortages
-Simulation updates: Time-based status changes
-Analytics Dashboard
-Resource utilization graphs: Ambulance/hospital capacity tracking
-Patient inflow trends: Emergency admission patterns
-ICU usage reports: Critical care bed management
-Response time metrics: Allocation efficiency tracking
-Secure Access Control
-Role-based permissions: Doctor, Nurse, Admin levels
-Patient data protection: Secure handling of medical information
-Audit logging: Track all system interactions
-Architecture
-Components
-Frontend: HTML/CSS/JavaScript web dashboard
-Backend: Python Flask REST API
-Data Layer: In-memory simulation (extensible to MongoDB/MySQL)
-Logic Layer: Allocation algorithms, monitoring systems
-Simulation Engine: Time-based status updates
-Tech Stack
-Layer	Technology
-Frontend	HTML, CSS, JavaScript
-Backend	Python Flask
-Database	In-memory (MongoDB/MySQL for production)
-DevOps	Docker
-Design	Figma
-Diagrams	Draw.io
-Version Control	GitHub
-Installation & Usage
-Prerequisites
-Python 3.8+
-Virtual environment (recommended)
-Setup
-# Clone repository
-git clone <repository-url>
-cd EMRAS
+This project focuses on improving hospital efficiency, reducing manual workload, and ensuring patient safety through digital monitoring and management.
 
-# Create virtual environment
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
+ Problem Statement
 
-# Install dependencies
-pip install -r EMRAS/requirements.txt
-Running the Application
-# Web Dashboard (Recommended)
-python -m EMRAS.web.app
-# Access at http://localhost:5000
+Hospitals face challenges such as:
 
-# CLI Simulation
-python EMRAS/main.py
-📋 System Scope
-✅ In Scope
-Resource allocation simulation
-IV drip monitoring alerts
+Manual tracking of medical resources
+
+Delay in identifying critical situations
+
+Inefficient allocation of beds and staff
+
+Lack of real-time IV and organ monitoring
+
+These issues can lead to treatment delays, resource wastage, and increased risk to patients.
+This system solves these problems by providing an automated, centralized, and reliable solution.
+
+ Target Users (Personas)
+
+Doctors – Allocate resources and monitor patients
+
+Nurses – Monitor IV drips and patient condition
+
+Hospital Admins – Manage staff and hospital resources
+
+Lab Technicians – Track organ safety
+
+System Admins – Maintain system operations
+
+ Vision Statement
+
+To develop a smart and reliable medical resource management system that enhances hospital efficiency, ensures patient safety, and supports healthcare professionals through automation and real-time monitoring.
+
+ Key Features / Goals
+
+Medical resource allocation
+
+IV drip monitoring system
+
 Organ safety tracking
-Web-based dashboard
-Real-time alerts
-Basic analytics
-Out of Scope
-Real hardware integration
-AI-based diagnostics
-Insurance processing
-Mobile applications
-Production deployment
-📈 Success Metrics
-100% IV monitoring alerts for critical thresholds
-Accurate organ tracking with viability predictions
-Reduced allocation time through smart algorithms
-Improved staff efficiency via automated monitoring
-Smooth system performance under load
-🔮 Future Enhancements
-AI priority prediction using machine learning
-Mobile app integration for field access
-IoT sensor connectivity for real-time monitoring
-Cloud analytics with advanced reporting
-Voice alerts for hands-free notifications.
+
+Real-time alert generation
+
+Role-based access control
+
+Centralized dashboard
+
+ Success Metrics
+
+Faster resource allocation
+
+Reduced manual errors
+
+Timely alerts for critical conditions
+
+Improved hospital workflow
+
+High system usability
+
+ Assumptions & Constraints
+Assumptions
+
+Users have internet access
+
+Hospital staff are trained
+
+Data entered is accurate
+
+Constraints
+
+Limited project development time
+
+No real-time hardware integration
