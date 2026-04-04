@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<header>
+  <h1>Analytics</h1>
+</header>
+
+<main>
+  <button id="getStats">Get Stats</button>
+  <div id="output"></div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('getStats').addEventListener('click', async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/analytics');
+    const data = await res.json();
+    document.getElementById('output').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  } catch (err) {
+    document.getElementById('output').innerHTML = `<p>Error: ${err.message}</p>`;
+  }
+});
+</script>
+{% endblock %}

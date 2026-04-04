@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts{% endblock %}
+
+{% block content %}
+<header>
+  <h1>Alerts</h1>
+</header>
+
+<main>
+  <form id="alertForm">
+    <input type="text" id="type" placeholder="Type" required>
+    <input type="text" id="severity" placeholder="Severity" required>
+    <input type="text" id="location" placeholder="Location" required>
+    <button type="submit">Create Alert</button>
+  </form>
+  <button id="getAlerts">Get Alerts</button>
+  <div id="output"></div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('alertForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = {
+    type: document.getElementById('type').value,
+    severity: document.getElementById('severity').value,
+    location: document.getElementById('location').value
+  };
+  try {
+    const res = await fetch('http://127.0.0.1:8000/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    document.getElementById('output').innerHTML = `<p>${result.msg}</p>`;
+  } catch (err) {
+    document.getElementById('output').innerHTML = `<p>Error: ${err.message}</p>`;
+  }
+});
+
+document.getElementById('getAlerts').addEventListener('click', async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/alerts');
+    const data = await res.json();
+    document.getElementById('output').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  } catch (err) {
+    document.getElementById('output').innerHTML = `<p>Error: ${err.message}</p>`;
+  }
+});
+</script>
+{% endblock %}
